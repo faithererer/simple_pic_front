@@ -2,6 +2,8 @@
 
 一个现代化的文件托管与分享平台，支持多种媒体格式。
 
+- 在线地址: [https://share.zjcspace.xyz](https://share.zjcspace.xyz)
+
 ## 功能特点
 
 - 📤 支持多种文件格式上传（图片、视频、音频、文档等）
