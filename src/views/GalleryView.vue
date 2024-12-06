@@ -509,15 +509,25 @@ const groupedMediaItems = computed(() => {
 
 // 格式化分组日期
 const formatGroupDate = (dateString) => {
+  // 创建日期对象并移除时间部分
   const date = new Date(dateString)
+  date.setHours(0, 0, 0, 0)
+  
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
   const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
+  yesterday.setDate(today.getDate() - 1)
+
+  // 转换为时间戳进行比较
+  const dateTimestamp = date.getTime()
+  const todayTimestamp = today.getTime()
+  const yesterdayTimestamp = yesterday.getTime()
 
   // 判断是否是今天或昨天
-  if (dateString === today.toISOString().split('T')[0]) {
+  if (dateTimestamp === todayTimestamp) {
     return '今天'
-  } else if (dateString === yesterday.toISOString().split('T')[0]) {
+  } else if (dateTimestamp === yesterdayTimestamp) {
     return '昨天'
   }
 
