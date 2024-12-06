@@ -1,6 +1,6 @@
 // export const API_BASE_URL = 'http://localhost:8083/api/v1'
 
-export const API_BASE_URL = 'http://disk.zjcspace.xyz:8083/api/v1'
+export const API_BASE_URL = 'https://disk.zjcspace.xyz:8443/api/v1'
 
 // API 请求配置
 export const apiConfig = {
