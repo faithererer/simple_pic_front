@@ -42,73 +42,84 @@
       </div>
 
       <!-- 媒体网格 -->
-      <div v-if="mediaItems.length" 
-           class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        <TransitionGroup 
-          name="media-grid"
-          appear
-          tag="div"
-          class="contents"
-        >
-          <div v-for="item in mediaItems" 
-               :key="item.id" 
-               class="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-            <!-- 预览图 -->
-            <template v-if="item.type.startsWith('image')">
-              <div v-if="!item.loaded" 
-                   class="w-full h-full animate-pulse bg-gray-200 dark:bg-gray-700">
-                <!-- 骨架屏动画 -->
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skeleton-shine"></div>
-              </div>
-              <img :src="item.thumbnailUrl ? `${API_BASE_URL}${item.thumbnailUrl}` : item.url"
-                   :alt="item.name"
-                   class="w-full h-full object-cover transition-opacity duration-300"
-                   :class="{ 'opacity-0': !item.loaded }"
-                   @load="handleImageLoad(item)"
-                   @error="handleImageError(item)">
-              </template>
-            <div v-else class="w-full h-full flex items-center justify-center text-4xl">
-              {{ getFileIcon(item.type) }}
-            </div>
-            
-            <!-- 悬浮操作栏 -->
-            <div class="media-overlay">
-              <!-- 渐变背景 -->
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60"></div>
-              
-              <!-- 文件信息和操作按钮 -->
-              <div class="relative p-4 text-white">
-                <p class="text-sm font-medium mb-3 truncate">{{ item.name }}</p>
-                <div class="flex items-center justify-center gap-3">
-                  <button @click.stop="openPreview(item)" 
-                          class="action-btn">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    <span class="text-xs">查看</span>
-                  </button>
+      <div v-if="groupedMediaItems.length" class="space-y-8">
+        <div v-for="group in groupedMediaItems" 
+             :key="group.date" 
+             class="space-y-4">
+          <!-- 日期标题 -->
+          <h3 class="text-lg font-medium sticky top-0 py-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10">
+            {{ formatGroupDate(group.date) }}
+          </h3>
 
-                  <button @click.stop="copyLink(item)" 
-                          class="action-btn">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
-                    </svg>
-                    <span class="text-xs">复制链接</span>
-                  </button>
+          <!-- 分组网格 -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <TransitionGroup 
+              name="media-grid"
+              appear
+              tag="div"
+              class="contents"
+            >
+              <div v-for="item in group.items" 
+                   :key="item.id" 
+                   class="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <!-- 预览图 -->
+                <template v-if="item.type.startsWith('image')">
+                  <div v-if="!item.loaded" 
+                       class="w-full h-full animate-pulse bg-gray-200 dark:bg-gray-700">
+                    <!-- 骨架屏动画 -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skeleton-shine"></div>
+                  </div>
+                  <img :src="item.thumbnailUrl ? `${API_BASE_URL}${item.thumbnailUrl}` : item.url"
+                       :alt="item.name"
+                       class="w-full h-full object-cover transition-opacity duration-300"
+                       :class="{ 'opacity-0': !item.loaded }"
+                       @load="handleImageLoad(item)"
+                       @error="handleImageError(item)">
+                  </template>
+                <div v-else class="w-full h-full flex items-center justify-center text-4xl">
+                  {{ getFileIcon(item.type) }}
+                </div>
+                
+                <!-- 悬浮操作栏 -->
+                <div class="media-overlay">
+                  <!-- 渐变背景 -->
+                  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60"></div>
+                  
+                  <!-- 文件信息和操作按钮 -->
+                  <div class="relative p-4 text-white">
+                    <p class="text-sm font-medium mb-3 truncate">{{ item.name }}</p>
+                    <div class="flex items-center justify-center gap-3">
+                      <button @click.stop="openPreview(item)" 
+                              class="action-btn">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <span class="text-xs">查看</span>
+                      </button>
 
-                  <button @click.stop="handleDelete(item)" 
-                          class="action-btn text-red-400 hover:text-red-300">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                    <span class="text-xs">删除</span>
-                  </button>
+                      <button @click.stop="copyLink(item)" 
+                              class="action-btn">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                        </svg>
+                        <span class="text-xs">复制链接</span>
+                      </button>
+
+                      <button @click.stop="handleDelete(item)" 
+                              class="action-btn text-red-400 hover:text-red-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        <span class="text-xs">删除</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </TransitionGroup>
           </div>
-        </TransitionGroup>
+        </div>
       </div>
 
       <!-- 空状态 -->
@@ -414,6 +425,55 @@ const getFileIcon = (type) => {
   // 如果没有匹配的类型，返回默认文件图标
   return '📄'
 }
+
+// 按日期分组的媒体项
+const groupedMediaItems = computed(() => {
+  const groups = mediaItems.value.reduce((acc, item) => {
+    // 获取日期（不包含时间）
+    const date = item.uploadedAt.split('T')[0]
+    
+    // 查找或创建分组
+    let group = acc.find(g => g.date === date)
+    if (!group) {
+      group = {
+        date,
+        items: []
+      }
+      acc.push(group)
+    }
+    
+    group.items.push(item)
+    return acc
+  }, [])
+
+  // 按日期降序排序
+  return groups.sort((a, b) => b.date.localeCompare(a.date))
+})
+
+// 格式化分组日期
+const formatGroupDate = (dateString) => {
+  const date = new Date(dateString)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  // 判断是否是今天或昨天
+  if (dateString === today.toISOString().split('T')[0]) {
+    return '今天'
+  } else if (dateString === yesterday.toISOString().split('T')[0]) {
+    return '昨天'
+  }
+
+  // 判断是否是今年
+  const isThisYear = date.getFullYear() === today.getFullYear()
+  
+  // 根据是否是今年返回不同的格式
+  return date.toLocaleDateString('zh-CN', {
+    year: isThisYear ? undefined : 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
 </script>
 
 <style scoped>
@@ -531,5 +591,40 @@ img.opacity-0 {
 .hover-controls,
 .hover-action-btn {
   display: none;
+}
+
+/* 日期标题样式 */
+h3 {
+  @apply transition-colors duration-300;
+  letter-spacing: -0.01em;
+}
+
+/* 分组容器样式 */
+.space-y-8 > div {
+  @apply transition-all duration-500;
+}
+
+/* 优化网格动画 */
+.media-grid-move {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.media-grid-enter-active {
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.media-grid-leave-active {
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  position: absolute;
+}
+
+.media-grid-enter-from {
+  opacity: 0;
+  transform: scale(0.95) translateY(10px);
+}
+
+.media-grid-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
 }
 </style> 
