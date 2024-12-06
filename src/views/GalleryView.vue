@@ -4,32 +4,66 @@
       <!-- 顶部控制栏 -->
       <div class="flex justify-between items-center mb-8">
         <h2 class="text-2xl font-bold">媒体库</h2>
-        <div class="flex gap-4">
-          <select v-model="filter" class="input max-w-xs">
+        <div class="flex gap-3">
+          <!-- 文件类型筛选 -->
+          <select v-model="filter" 
+                  class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 
+                         bg-white dark:bg-gray-800 dark:border-gray-700
+                         focus:ring-1 focus:ring-primary-500 focus:border-primary-500
+                         outline-none transition-all duration-200">
             <option value="all">全部文件</option>
             <option value="image">图片</option>
             <option value="video">视频</option>
             <option value="audio">音频</option>
           </select>
+
+          <!-- 排序按钮和下拉菜单 -->
           <div class="relative">
             <button 
-              @click="showSortMenu = !showSortMenu"
-              class="btn btn-secondary flex items-center gap-2"
+              @click.stop="showSortMenu = !showSortMenu"
+              class="sort-button px-3 py-1.5 text-sm rounded-lg border border-gray-200 
+                     bg-white dark:bg-gray-800 dark:border-gray-700
+                     hover:bg-gray-50 dark:hover:bg-gray-700
+                     transition-all duration-200
+                     flex items-center gap-1.5"
             >
-              {{ sortOptions[currentSort] }}
-              <span class="text-xs">▼</span>
+              <span>{{ sortOptions[currentSort] }}</span>
+              <svg class="w-3.5 h-3.5 transition-transform duration-200"
+                   :class="{ 'rotate-180': showSortMenu }"
+                   viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
             </button>
+
             <!-- 排序下拉菜单 -->
-            <div v-if="showSortMenu"
-                 class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 z-10">
-              <button v-for="(label, value) in sortOptions" 
-                      :key="value"
-                      @click="handleSort(value)"
-                      class="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
-                      :class="{ 'text-primary-500': currentSort === value }"
-              >
-                {{ label }}
-              </button>
+            <div v-show="showSortMenu"
+                 class="sort-menu absolute right-0 mt-1 w-40 
+                        bg-white dark:bg-gray-800 
+                        rounded-lg shadow-lg ring-1 ring-black/5 dark:ring-white/5
+                        overflow-hidden"
+                 :style="{ zIndex: 20 }">
+              <div class="py-1">
+                <button v-for="(label, value) in sortOptions" 
+                        :key="value"
+                        @click="handleSort(value)"
+                        class="w-full px-4 py-1.5 text-sm text-left
+                               hover:bg-gray-50 dark:hover:bg-gray-700
+                               transition-colors duration-200
+                               flex items-center justify-between"
+                        :class="{ 
+                          'text-primary-500 bg-primary-50/50 dark:bg-primary-900/10': currentSort === value,
+                          'text-gray-700 dark:text-gray-200': currentSort !== value
+                        }"
+                >
+                  <span>{{ label }}</span>
+                  <svg v-if="currentSort === value" 
+                       class="w-4 h-4 text-primary-500" 
+                       viewBox="0 0 20 20" 
+                       fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -47,7 +81,7 @@
              :key="group.date" 
              class="space-y-4">
           <!-- 日期标题 -->
-          <h3 class="text-lg font-medium sticky top-0 py-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10">
+          <h3 class="text-lg font-medium py-2 mb-2 border-b border-gray-100 dark:border-gray-800">
             {{ formatGroupDate(group.date) }}
           </h3>
 
@@ -71,11 +105,14 @@
                   </div>
                   <img :src="item.thumbnailUrl ? `${API_BASE_URL}${item.thumbnailUrl}` : item.url"
                        :alt="item.name"
-                       class="w-full h-full object-cover transition-opacity duration-300"
-                       :class="{ 'opacity-0': !item.loaded }"
+                       class="w-full h-full object-cover"
+                       :class="{
+                         'opacity-0': !item.loaded,
+                         'opacity-100': item.loaded
+                       }"
                        @load="handleImageLoad(item)"
                        @error="handleImageError(item)">
-                  </template>
+                </template>
                 <div v-else class="w-full h-full flex items-center justify-center text-4xl">
                   {{ getFileIcon(item.type) }}
                 </div>
@@ -194,8 +231,8 @@ const loadMediaList = async (isLoadMore = false) => {
         ...item,
         url: item.url.startsWith('http') ? item.url : `${API_BASE_URL}${item.url}`,
         thumbnailUrl: item.thumbnailUrl,
-        loaded: false, // 添加加载状态标记
-        error: false // 添加错误状态标记
+        loaded: false, // 初始化加载状态
+        error: false
       }))
 
       if (isLoadMore) {
@@ -206,6 +243,16 @@ const loadMediaList = async (isLoadMore = false) => {
       
       hasMore.value = processedItems.length === ITEMS_PER_PAGE
       page.value = isLoadMore ? page.value : 1
+
+      // 预加载图片
+      processedItems.forEach(item => {
+        if (item.type.startsWith('image')) {
+          const img = new Image()
+          img.src = item.thumbnailUrl ? `${API_BASE_URL}${item.thumbnailUrl}` : item.url
+          img.onload = () => handleImageLoad(item)
+          img.onerror = () => handleImageError(item)
+        }
+      })
     } else {
       throw new Error(result.error)
     }
@@ -270,6 +317,7 @@ watch([hasMore, loading], ([newHasMore, newLoading]) => {
 onMounted(async () => {
   await loadMediaList()
   setupIntersectionObserver()
+  document.addEventListener('click', handleClickOutside)
 })
 
 // 组件更新时重新设置观察者
@@ -285,6 +333,7 @@ onUnmounted(() => {
     observer.disconnect()
     observer = null
   }
+  document.removeEventListener('click', handleClickOutside)
 })
 
 // 预览控制
@@ -362,34 +411,42 @@ watch(filter, () => {
 
 // 点击外部关闭排序菜单
 const handleClickOutside = (event) => {
-  if (showSortMenu.value) {
+  // 检查点击是否在排序按钮或菜单之外
+  const sortButton = event.target.closest('.sort-button')
+  const sortMenu = event.target.closest('.sort-menu')
+  
+  if (!sortButton && !sortMenu) {
     showSortMenu.value = false
   }
 }
 
-// 添加全局点击事件监听
-window.addEventListener('click', handleClickOutside)
-
 // 处理图片加载完成
 const handleImageLoad = (item) => {
+  console.log('图片加载完成:', item.name) // 添加调试日志
   const index = mediaItems.value.findIndex(i => i.id === item.id)
   if (index !== -1) {
-    mediaItems.value[index] = {
-      ...mediaItems.value[index],
-      loaded: true
-    }
+    // 使用 nextTick 确保状态更新和 DOM 渲染同步
+    nextTick(() => {
+      mediaItems.value[index] = {
+        ...mediaItems.value[index],
+        loaded: true
+      }
+    })
   }
 }
 
 // 处理图片加载失败
 const handleImageError = (item) => {
+  console.error('图片加载失败:', item.name) // 添加调试日志
   const index = mediaItems.value.findIndex(i => i.id === item.id)
   if (index !== -1) {
-    mediaItems.value[index] = {
-      ...mediaItems.value[index],
-      error: true,
-      loaded: true
-    }
+    nextTick(() => {
+      mediaItems.value[index] = {
+        ...mediaItems.value[index],
+        error: true,
+        loaded: true
+      }
+    })
   }
 }
 
@@ -626,5 +683,10 @@ h3 {
 .media-grid-leave-to {
   opacity: 0;
   transform: scale(0.95);
+}
+
+/* 确保下拉菜单在最上层 */
+.sort-menu {
+  z-index: 50;
 }
 </style> 
