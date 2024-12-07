@@ -49,4 +49,17 @@ const features = [
     description: '现代化的界面设计，支持亮暗主题切换，随心掌控'
   }
 ]
-</script> 
+</script>
+
+<style scoped>
+.text-transparent {
+  -webkit-text-fill-color: transparent;
+}
+
+h1 {
+  padding: 0.1em 0;  /* 添加一点垂直内边距 */
+  line-height: 1.2;  /* 调整行高 */
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+</style> 
