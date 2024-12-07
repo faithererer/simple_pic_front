@@ -190,7 +190,7 @@ import { ref, computed, onMounted, watch, onUnmounted, nextTick, onUpdated } fro
 import MediaPreview from '../components/MediaPreview.vue'
 import ScrollLoader from '../components/ScrollLoader.vue'
 import { getMediaList, deleteFile } from '../api/upload'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { API_BASE_URL } from '../api/config'
 
 const filter = ref('all')
@@ -364,7 +364,7 @@ const copyLink = async (item) => {
     ElMessage.error({
       message: `复制失败: ${error.message}`,
       type: 'error',
-      duration: 3000
+      duration: 2000
     })
   }
 }
@@ -372,24 +372,38 @@ const copyLink = async (item) => {
 // 删除文件
 const handleDelete = async (item) => {
   try {
-    const result = await deleteFile(item.id)
-    if (result.success) {
-      mediaItems.value = mediaItems.value.filter(i => i.id !== item.id)
-      ElMessage.success({
-        message: '文件删除成功',
-        type: 'success',
-        duration: 3000
-      })
-    } else {
-      throw new Error(result.error)
-    }
-  } catch (error) {
-    console.error('删除失败:', error)
-    ElMessage.error({
-      message: `删除失败: ${error.message || '未知错误'}`,
-      type: 'error',
-      duration: 5000
+    await ElMessageBox.confirm(
+      '删除后将无法恢复此文件，是否继续？',
+      '确认删除',
+      {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        customClass: 'custom-message-box',
+        confirmButtonClass: 'custom-confirm-button',
+        cancelButtonClass: 'custom-cancel-button',
+        center: true,
+        icon: 'Warning'
+      }
+    )
+    
+    // 原有的删除逻辑
+    await deleteFile(item.id)
+    mediaItems.value = mediaItems.value.filter(i => i.id !== item.id)
+    ElMessage.success({
+      message: '文件删除成功',
+      type: 'success',
+      duration: 2000
     })
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+      ElMessage.error({
+        message: `删除失败: ${error.message || '未知错误'}`,
+        type: 'error',
+        duration: 5000
+      })
+    }
   }
 }
 
@@ -698,5 +712,96 @@ h3 {
 /* 确保下拉菜单在最上层 */
 .sort-menu {
   z-index: 50;
+}
+
+/* 自定义确认对话框样式 */
+.custom-message-box {
+  border-radius: 12px !important;
+  padding: 24px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.dark .custom-message-box {
+  background: rgba(30, 30, 30, 0.9) !important;
+}
+
+.custom-message-box .el-message-box__header {
+  padding: 0 !important;
+  margin-bottom: 16px !important;
+}
+
+.custom-message-box .el-message-box__title {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+
+.custom-message-box .el-message-box__content {
+  padding: 0 !important;
+  margin-bottom: 24px !important;
+  color: #666 !important;
+}
+
+.dark .custom-message-box .el-message-box__content {
+  color: #aaa !important;
+}
+
+.custom-message-box .el-message-box__btns {
+  padding: 0 !important;
+  gap: 12px !important;
+}
+
+.custom-confirm-button {
+  background: #ff3b30 !important;
+  border-color: #ff3b30 !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.custom-confirm-button:hover {
+  background: #ff1f1f !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3) !important;
+}
+
+.custom-cancel-button {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  color: #666 !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.dark .custom-cancel-button {
+  color: #aaa !important;
+}
+
+.custom-cancel-button:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark .custom-cancel-button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 添加动画效果 */
+.el-message-box {
+  animation: messageBoxIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes messageBoxIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 </style> 
