@@ -26,7 +26,8 @@
 - Iconify - 图标系统
 - Vue Router - 路由管理
 - Pinia - 状态管理
-
+## 通过vercel部署
+[<img src="https://vercel.com/button" alt="Deploy on Vercel" height="30">](https://vercel.com/new/import?s=https%3A%2F%2Fgithub.com%2Ffaithererer%2Fsimple_pic_front&hasTrialAvailable=1&showOptionalTeamCreation=false&project-name=simple-pic-front&framework=vite&totalProjects=1&remainingProjects=1&teamSlug=faithererers-projects) 
 ## 开发环境设置
 
 ```bash
